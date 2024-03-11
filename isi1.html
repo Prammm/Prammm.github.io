@@ -1,0 +1,162 @@
+<!doctype html>
+<html class="no-js" lang="zxx">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>BullGym </title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="manifest.json">
+    <link rel="shortcut icon" type="image/x-icon" href="src/images/icons/loderr.png">
+    <link rel="stylesheet" href="src/css/app.css">
+    <link rel="stylesheet" href="src/css/feed.css">
+    <link rel="stylesheet" href="src/css/bootstrap.min.css">
+    <link rel="stylesheet" href="src/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="src/css/slicknav.css">
+    <link rel="stylesheet" href="src/css/flaticon.css">
+    <link rel="stylesheet" href="src/css/gijgo.css">
+    <link rel="stylesheet" href="src/css/animate.min.css">
+    <link rel="stylesheet" href="src/css/animated-headline.css">
+    <link rel="stylesheet" href="src/css/magnific-popup.css">
+    <link rel="stylesheet" href="src/css/fontawesome-all.min.css">
+    <link rel="stylesheet" href="src/css/themify-icons.css">
+    <link rel="stylesheet" href="src/css/slick.css">
+    <link rel="stylesheet" href="src/css/nice-select.css">
+    <link rel="stylesheet" href="src/css/style.css">
+</head>
+
+<body class="black-bg">
+
+    <header>
+        <div class="header-area header-transparent">
+            <div class="main-header header-sticky">
+                <div class="container-fluid">
+                    <div class="menu-wrapper d-flex align-items-center justify-content-between">
+                        <div class="logo">
+                            <a href="index.html"><img src="src/images/icons/loderr.png" width="100" height="100"
+                                    alt=""></a>
+                        </div>
+                        <div class="main-menu f-right d-none d-lg-block">
+                            <nav>
+                                <ul id="navigation">
+                                    <li><a href="index.html">Home</a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                        <div class="col-12">
+                            <div class="mobile_menu d-block d-lg-none"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+
+
+        <section class="about-area2 fix pb-padding pt-50 pb-80">
+            <div class="container" style="margin-top: 20vh;">
+                <div class="support-wrapper align-items-center">
+                    <div class="right-content2">
+                        <div class="right-img wow fadeInUp" data-wow-duration="1s" data-wow-delay=".1s">
+                            <img src="" alt="" class="image">
+                        </div>
+                    </div>
+                    <div class="left-content2">
+                        <div class="section-tittle2 mb-20 wow fadeInUp" data-wow-duration="1s" data-wow-delay=".3s">
+                            <div class="front-text">
+                                <h2 class=""></h2>
+                                <p></p>
+                                <p class="mb-40"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    <script defer src="src/js/material.min.js"></script>
+    <script src="src/js/promise.js"></script>
+    <script src="src/js/fetch.js"></script>
+    <script src="src/js/idb.js"></script>
+    <script src="src/js/utility.js"></script>
+    <script src="src/js/app.js"></script>
+    <script src="src/js/feed.js"></script>
+    <script src="src/js/vendor/jquery-1.12.4.min.js"></script>
+    <script src="src/js/jquery.slicknav.min.js"></script>
+    <script src="src/js/main.js"></script>
+<script>
+    const openDB = indexedDB.open("QuizDB", 1);
+
+    openDB.onupgradeneeded = function(event) {
+        let db = event.target.result;
+        if (!db.objectStoreNames.contains('exercises')) {
+            db.createObjectStore('exercises', { keyPath: 'id' });
+        }
+    };
+
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const params = new URLSearchParams(window.location.search);
+        const exerciseId = params.get('id');
+        const image = document.querySelector('.image');
+
+        openDB.onsuccess = function() {
+            const db = this.result;
+            fetch(`https://quiz1-a68c6-default-rtdb.asia-southeast1.firebasedatabase.app/card/${exerciseId}.json`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    document.querySelector('.right-content2 .right-img img').src = data.img;
+                    document.querySelector('.left-content2 .section-tittle2 h2').innerText = data.tittle;
+                    image.setAttribute('src', data.img);
+                    const paragraphs = document.querySelectorAll('.left-content2 .section-tittle2 p');
+                    paragraphs[0].innerText = data.description;
+                    paragraphs[1].innerText = data.detail;
+
+                    let tx = db.transaction('exercises', 'readwrite');
+                    let store = tx.objectStore('exercises');
+                    store.put({ id: exerciseId, data: data });
+                    tx.oncomplete = () => {
+                        console.log('Exercise saved to IndexedDB');
+                    };
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    let tx = db.transaction('exercises', 'readonly');
+                    let store = tx.objectStore('exercises');
+                    let request = store.get(exerciseId);
+
+                    request.onsuccess = function() {
+                        let data = request.result;
+                        if (data) {
+                            document.querySelector('.right-content2 .right-img img').src = data.data.img;
+                            document.querySelector('.left-content2 .section-tittle2 h2').innerText = data.data.tittle;
+                            image.setAttribute('src', data.data.img);
+                            const paragraphs = document.querySelectorAll('.left-content2 .section-tittle2 p');
+                            paragraphs[0].innerText = data.data.description;
+                            paragraphs[1].innerText = data.data.detail;
+                        } else {
+                            window.location.href = 'offline.html';
+                        }
+                    };
+                });
+        };
+    });
+</script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js').then(function(registration) {
+
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
