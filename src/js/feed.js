@@ -1,3 +1,28 @@
+let deferredPrompt;
+
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); 
+    deferredPrompt = e; 
+    document.getElementById('install-button').style.display = 'block'; 
+});
+
+document.getElementById('install-button').addEventListener('click', () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt(); 
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            } else {
+                console.log('User dismissed the install prompt');
+            }
+            deferredPrompt = null; 
+            document.getElementById('install-button').style.display = 'none';
+        });
+    }
+});
+
+
 // var shareImageButton = document.querySelector('#share-image-button');
 // var createPostArea = document.querySelector('#create-post');
 // var closeCreatePostModalButton = document.querySelector('#close-create-post-modal-btn');
